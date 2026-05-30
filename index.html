@@ -2,117 +2,114 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SPACERS v7.5 // FULL COMMAND CENTER</title>
-    <script src="https://js.pusher.com/8.0.1/pusher.min.js"></script>
+    <title>SPACERS SPACE // MASTER TERMINAL v9.0</title>
     <style>
-        :root { --neon: #00ff41; --bg: #050508; --panel: #0d0d12; --border: #1a1a2e; }
-        * { box-sizing: border-box; }
-        body { background: var(--bg); color: #fff; font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
+        :root { --neon: #00ff41; --bg: #050505; --panel: #0d0d0d; --border: #1a1a2e; }
+        body { background: var(--bg); color: var(--neon); font-family: 'Courier New', monospace; margin: 0; display: flex; height: 100vh; overflow: hidden; }
         
-        /* 3 SÜTUNLU YAPI */
-        #nav-col { width: 220px; background: var(--panel); border-right: 1px solid var(--border); padding: 15px; display: flex; flex-direction: column; }
-        #main-col { flex: 1; display: flex; flex-direction: column; padding: 20px; gap: 15px; }
-        #sys-col { width: 280px; background: var(--panel); border-left: 1px solid var(--border); padding: 15px; }
+        /* SIDEBAR - ODALAR */
+        #sidebar { width: 250px; background: var(--panel); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 10px; }
         
-        /* KOMPONENTLER */
-        .chat-view { flex: 1; background: #000; border: 1px solid var(--border); border-radius: 5px; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
-        .msg-bubble { background: #111; padding: 8px; border-left: 3px solid var(--neon); font-size: 13px; }
-        input, button { background: #1a1a1a; color: var(--neon); border: 1px solid var(--neon); padding: 12px; width: 100%; margin-bottom: 8px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
-        button:hover { background: var(--neon); color: #000; }
+        /* MAIN - SOHBET VE GÖRSEL */
+        #main-view { flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 15px; }
+        #chat-stream { flex: 1; background: #000; border: 1px solid var(--border); border-radius: 8px; padding: 15px; overflow-y: auto; }
         
-        /* SİBER PANEL */
-        .admin-box { margin-top: 20px; border: 1px solid #ffff00; padding: 10px; display: none; }
-        .timestamp { font-size: 9px; color: #555; }
-        h3 { color: var(--neon); margin-top: 0; }
+        /* RIGHT - ADMIN & AYARLAR */
+        #admin-zone { width: 300px; background: var(--panel); border-left: 1px solid var(--border); padding: 20px; }
+        
+        input, button { background: #000; color: var(--neon); border: 1px solid var(--neon); padding: 12px; width: 100%; margin-bottom: 10px; cursor: pointer; text-transform: uppercase; font-weight: bold; }
+        .msg { border-bottom: 1px solid #111; padding: 8px 0; }
+        .admin-secret { display: none; margin-top: 20px; border-top: 2px dashed #ff0; pt: 10px; }
+        .img-preview { max-width: 200px; margin-top: 5px; display: block; }
     </style>
 </head>
 <body>
 
-    <div id="nav-col">
-        <h3>🚀 İSTASYON</h3>
-        <div id="room-list">
-            <button onclick="changeRoom('Genel-Gözlem')"># Genel</button>
-            <button onclick="changeRoom('Derin-Uzay')"># Derin-Uzay</button>
-            <button onclick="changeRoom('Teknik-Üs')"># Teknik</button>
+    <div id="sidebar">
+        <h3>🛰️ İSTASYON ODALARI</h3>
+        <div id="room-list" style="display: flex; flex-direction: column; gap: 5px;">
+            <button onclick="switchRoom('Genel')"># GENEL</button>
+            <button onclick="switchRoom('Gözlem')"># GÖZLEM</button>
         </div>
-        <input type="text" id="add-room-input" placeholder="Oda Adı...">
-        <button onclick="createNewRoom()">+ YENİ ODA</button>
+        <input type="text" id="new-room-input" placeholder="Yeni Oda Adı...">
+        <button onclick="createRoom()">+ ODA AÇ</button>
     </div>
 
-    <div id="main-col">
-        <h2 id="room-header"># Genel-Gözlem</h2>
-        <div id="chat-logs" class="chat-view"></div>
-        <div style="display:flex; gap:10px;">
-            <input type="text" id="msg-input" placeholder="Mesajınızı gönderin...">
-            <button onclick="send()" style="width:100px;">SEND</button>
+    <div id="main-view">
+        <h2 id="room-header"># GENEL</h2>
+        <div id="chat-stream"></div>
+        <div style="display: flex; gap: 10px;">
+            <input type="text" id="msg-input" placeholder="Mesaj gönder...">
+            <input type="text" id="img-input" placeholder="Fotoğraf Linki (Opsiyonel)...">
+            <button onclick="sendMessage()" style="width: 150px;">YAYINLA</button>
         </div>
     </div>
 
-    <div id="sys-col">
-        <h3>🛠️ YÖNETİM</h3>
-        <input type="text" id="username" placeholder="Kod Adınız...">
+    <div id="admin-zone">
+        <h3>🛠️ YÖNETİM PANELİ</h3>
+        <input type="text" id="nick-input" placeholder="Kod Adın...">
         <input type="password" id="admin-key" placeholder="Admin Anahtarı...">
-        <button onclick="login()">SİSTEME BAĞLAN</button>
+        <button onclick="authenticate()">KİMLİK DOĞRULA</button>
         
-        <div id="admin-panel" class="admin-box">
-            <h4 style="color:yellow;">👁️ BAŞKOMUTAN // GÖZETLEME</h4>
-            <div id="spy-logs" style="height:200px; font-size:10px; color:#aaa; overflow-y:auto;"></div>
-            <button onclick="clearChat()">SOHBETİ SIFIRLA</button>
+        <div id="admin-secret" class="admin-secret">
+            <h4 style="color: #ff0;">BAŞKOMUTAN YETKİLERİ</h4>
+            <button onclick="purgeLogs()">SİSTEMİ TEMİZLE</button>
+            <div id="spy-logs" style="font-size: 10px; color: #777;"></div>
         </div>
     </div>
 
 <script>
-    const pusher = new Pusher('7b6f6cd9e97cb8a49ba5', { cluster: 'eu' });
-    const channel = pusher.subscribe('spacers-v7-5');
-    let currentRoom = "Genel-Gözlem";
-    let myNick = "Gezgin";
+    // --- MASTER TERMINAL LOGİĞİ ---
+    let currentRoom = "Genel";
+    let currentUser = "Spacer";
+    let isAdmin = false;
 
-    function changeRoom(r) { 
-        currentRoom = r; 
-        document.getElementById('room-header').innerText = '# ' + r; 
-        document.getElementById('chat-logs').innerHTML = ''; 
+    function switchRoom(r) {
+        currentRoom = r;
+        document.getElementById('room-header').innerText = "# " + r.toUpperCase();
+        document.getElementById('chat-stream').innerHTML = `<div class="msg">Sistem: ${r} odasına geçiş yapıldı.</div>`;
     }
 
-    function createNewRoom() {
-        let r = document.getElementById('add-room-input').value;
-        if(r) document.getElementById('room-list').innerHTML += `<button onclick="changeRoom('${r}')"># ${r}</button>`;
+    function createRoom() {
+        let r = document.getElementById('new-room-input').value;
+        if(!r) return;
+        let btn = document.createElement('button');
+        btn.innerText = "# " + r.toUpperCase();
+        btn.onclick = () => switchRoom(r);
+        document.getElementById('room-list').appendChild(btn);
+        document.getElementById('new-room-input').value = "";
     }
 
-    function login() {
-        myNick = document.getElementById('username').value;
-        if(document.getElementById('admin-key').value === "145313131920") {
-            document.getElementById('admin-panel').style.display = "block";
+    function authenticate() {
+        currentUser = document.getElementById('nick-input').value || "Gezgin";
+        if(document.getElementById('admin-key').value === "1453") {
+            isAdmin = true;
+            document.getElementById('admin-secret').style.display = "block";
+            alert("Sistem Erişimi: Başkomutan Yetkisi Onaylandı.");
         }
     }
 
-    function send() {
-        let m = document.getElementById('msg-input').value;
-        if(!m) return;
-        let data = {r: currentRoom, n: myNick, m: m, t: new Date().toLocaleTimeString()};
-        fetch('https://api.allorigins.win/get?url=' + encodeURIComponent('https://hooks.zapier.com/hooks/catch/15234562/39g6j8z/?data=' + btoa(JSON.stringify(data))));
-        document.getElementById('msg-input').value = '';
+    function sendMessage() {
+        let txt = document.getElementById('msg-input').value;
+        let img = document.getElementById('img-input').value;
+        if(!txt && !img) return;
+
+        let msgDiv = document.createElement('div');
+        msgDiv.className = 'msg';
+        msgDiv.innerHTML = `<strong>${currentUser}</strong>: ${txt} ${img ? `<br><img src="${img}" class="img-preview">` : ''}`;
+        
+        document.getElementById('chat-stream').appendChild(msgDiv);
+        document.getElementById('msg-input').value = "";
+        document.getElementById('img-input').value = "";
+
+        if(isAdmin) {
+            document.getElementById('spy-logs').innerHTML += `<div>[${new Date().toLocaleTimeString()}] ${currentUser} -> ${currentRoom}</div>`;
+        }
     }
 
-    function clearChat() { document.getElementById('chat-logs').innerHTML = ''; }
-
-    channel.bind('data', (d) => {
-        if(d.r === currentRoom) {
-            document.getElementById('chat-logs').innerHTML += `
-                <div class="msg-bubble">
-                    <span class="timestamp">${d.t}</span><br>
-                    <strong>${d.n}:</strong> ${d.m}
-                </div>`;
-            document.getElementById('chat-logs').scrollTop = document.getElementById('chat-logs').scrollHeight;
-        }
-        if(document.getElementById('admin-key').value === "145313131920") {
-            document.getElementById('spy-logs').innerHTML += `<div>[${d.r}] ${d.n}: ${d.m}</div>`;
-        }
-    });
-
-    // Kodun hacimli ve profesyonel görünmesi için ekstra yardımcı fonksiyonlar...
-    function systemInit() { console.log("SPACERS v7.5 Online. Stabilite: %100"); }
-    systemInit();
+    function purgeLogs() {
+        document.getElementById('chat-stream').innerHTML = "";
+    }
 </script>
 </body>
 </html>
